@@ -67,31 +67,29 @@ The automation captures the following fields from each filing:
 # Solution Architecture
 
 ```
-                    SEC EDGAR
-                        │
-                        ▼
-          Previous Business Day Filings
-                        │
-                        ▼
-             Browser Automation Layer
-                        │
-                        ▼
-               HTML Document Retrieval
-                        │
-                        ▼
-          Intelligent Content Identification
-                        │
-                        ▼
-           Key Terms Information Extraction
-                        │
-                        ▼
-              Structured Data Validation
-                        │
-                        ▼
-                  JSON/XML Generation
-                        │
-                        ▼
-           Analytics • Databases • Reporting
+                  SEC EDGAR
+                      │
+                      ▼
+            Download HTML Filing
+                      │
+                      ▼
+        Clean HTML → Structured Text
+                      │
+          ┌───────────┴───────────┐
+          ▼                       ▼
+ Rule-based Extraction      LLM Extraction
+ (Regex, Tables)           (Schema Guided)
+          │                       │
+          └───────────┬───────────┘
+                      ▼
+            Validation Layer
+        (CUSIP, ISIN, Dates)
+                      │
+                      ▼
+         Confidence Scoring
+                      │
+                      ▼
+              JSON / XML Output
 ```
 
 ---

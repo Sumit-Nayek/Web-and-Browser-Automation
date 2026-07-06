@@ -102,37 +102,25 @@ The automation captures the following fields from each filing:
 
 Automates repetitive document review activities, enabling analysts to focus on higher-value financial analysis rather than manual data collection.
 
----
-
 ## Improved Accuracy
 
 Reduces transcription errors associated with manual extraction and ensures consistent identification of required security attributes.
-
----
 
 ## Faster Processing
 
 Processes multiple SEC filings automatically in minutes rather than hours of manual effort.
 
----
-
 ## Standardized Data
 
 Transforms heterogeneous regulatory disclosures into a consistent schema suitable for enterprise applications and analytical workflows.
-
----
 
 ## Scalable Automation
 
 Designed to support increasing filing volumes with minimal additional operational overhead.
 
----
-
 ## Reduced Operational Risk
 
 Minimizes dependency on manual workflows and improves repeatability across reporting cycles.
-
----
 
 # Business Impact
 

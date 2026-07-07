@@ -181,18 +181,28 @@ def _clean_value(canonical: str, value: str) -> str | None:
     v = _clean(value)
     if not v:
         return None
+        
     if canonical in DATE_FIELDS:
-        return normalize_date(v) or v  # keep raw if unparseable, flag later
+        parsed = normalize_date(v)
+        if parsed:
+            return parsed
+        # Reject giant paragraphs (like the UBS layout) so it gets flagged as missing
+        if len(v) > 60:
+            return None
+        return v  # Keep short raw text if unparseable, flag later
+        
     if canonical == "cusip":
         m = re.search(r"[0-9A-Z@#*]{9}", v.upper())
         if m and is_valid_cusip(m.group(0)):
             return m.group(0)
         return None
+        
     if canonical == "isin":
         m = re.search(r"[A-Z]{2}[0-9A-Z]{9}[0-9]", v.upper())
         if m and is_valid_isin(m.group(0)):
             return m.group(0)
         return None
+        
     # free-text fields: trim boilerplate tails
     return v[:300]
 

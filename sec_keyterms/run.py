@@ -24,8 +24,11 @@ log = logging.getLogger("sec_keyterms")
 
 
 def build_record(filing, doc_url, extraction) -> dict:
-    status = "complete" if not extraction.missing else (
-        "partial" if any(v for v in extraction.fields.values()) else "failed"
+    # ISIN and Guarantor are optional. If only they are missing, it's still 'complete'.
+    optional_fields = {"isin", "guarantor"}
+    truly_missing = [f for f in extraction.missing if f not in optional_fields]    
+    status = "complete" if not truly_missing else (
+        "partial" if any(v for k, v in extraction.fields.items() if v and k not in optional_fields) else "failed"
     )
     return {
         "accession_number": filing.accession,

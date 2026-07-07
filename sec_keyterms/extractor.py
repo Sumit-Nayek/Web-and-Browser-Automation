@@ -202,7 +202,12 @@ def _clean_value(canonical: str, value: str) -> str | None:
         if m and is_valid_isin(m.group(0)):
             return m.group(0)
         return None
+    # For free-text fields like company_issuer, trim common boilerplate definitions
+    if canonical in ["company_issuer", "guarantor"]:
+        # Strip everything after a parenthesis or common boilerplate markers
+        v = re.split(r'\(|“|"', v)[0].strip()
         
+    return v[:300]    
     # free-text fields: trim boilerplate tails
     return v[:300]
 

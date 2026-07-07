@@ -89,14 +89,21 @@ def _pairs_from_tables(soup: BeautifulSoup) -> list[tuple[str, str]]:
     pairs: list[tuple[str, str]] = []
     for table in soup.find_all("table"):
         for row in table.find_all("tr"):
+            # CRITICAL FIX: Ensure the row belongs to the current table, not a nested one
+            if row.find_parent("table") != table:
+                continue
+                
             cells = [c for c in row.find_all(["td", "th"]) if _clean(c.get_text())]
             if len(cells) < 2:
                 continue
+            
             label = cells[0].get_text(" ")
             value = cells[1].get_text(" ")
-            # some layouts put label in col0 and value in last col
+            
+            # Handle layouts that put the label in col0 and value in the last col
             if not _clean(value) and len(cells) > 2:
                 value = cells[-1].get_text(" ")
+                
             pairs.append((label, value))
     return pairs
 

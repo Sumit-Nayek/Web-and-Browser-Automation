@@ -44,11 +44,12 @@ def extract_missing_fields_with_llm(text_chunk: str, missing_fields: list[str]) 
 
     try:
         # We use a fast, highly capable model like Llama 3 70B hosted on NIM
+        # Update the model string to point to the correct 3.1 version
         response = client.chat.completions.create(
-            model="meta/llama3-70b-instruct",
+            model="deepseek-ai/deepseek-v4-pro", 
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": text_chunk[:15000]} # Limit tokens to prevent overload
+                {"role": "user", "content": text_chunk[:15000]} 
             ],
             temperature=0,
             response_format={

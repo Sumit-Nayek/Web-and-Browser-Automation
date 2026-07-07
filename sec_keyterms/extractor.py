@@ -18,13 +18,18 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
+from unittest import result
 
 from bs4 import BeautifulSoup
 
 from .validators import is_valid_cusip, is_valid_isin, normalize_date
 
 log = logging.getLogger(__name__)
+import warnings
+from bs4 import XMLParsedAsHTMLWarning
 
+# SEC documents often mix HTML and XML. This suppresses the noisy BeautifulSoup warning.
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 # ---------------------------------------------------------------------------
 # Canonical field -> label synonyms (lowercase, punctuation-stripped matching)
 # Order matters: first synonym hit wins for a field.
@@ -232,6 +237,13 @@ def extract_key_terms(html: str, target_fields: tuple[str, ...]) -> ExtractionRe
                 result.fields["isin"] = m.group(1).upper()
                 result.method_used["isin"] = "regex_fallback"
                 break
-
+    
     result.missing = [f for f, v in result.fields.items() if v is None]
+    # Add this snippet near the bottom of extract_key_terms, right before identifier fallbacks
+    issuer_name = result.fields.get("company_issuer", "") or ""
+    if "Goldman Sachs" in issuer_name and any(v is None for v in result.fields.values()):
+        # Example placeholder: Execute Goldman-specific regex or table logic here
+        # doc_text = soup.get_text(" ")
+        # custom_gs_extraction(doc_text, result)
+        pass
     return result

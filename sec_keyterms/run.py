@@ -19,6 +19,8 @@ from .daily_index import fetch_filings_for_day, resolve_primary_document
 from .extractor import extract_key_terms
 from .http_client import EdgarClient
 from .writers import write_json, write_xml
+from bs4 import BeautifulSoup
+from .llm_client import extract_missing_fields_with_llm
 
 log = logging.getLogger("sec_keyterms")
 
@@ -44,8 +46,7 @@ def build_record(filing, doc_url, extraction) -> dict:
     }
 
 
-def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path,
-        limit: int | None = None) -> int:
+def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, limit: int | None = None) -> int:
     client = EdgarClient()
     filings = fetch_filings_for_day(client, target_date, forms)
     if limit:
@@ -53,29 +54,47 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path,
 
     records: list[dict] = []
     for i, filing in enumerate(filings, 1):
-        log.info("[%d/%d] %s %s (%s)", i, len(filings), filing.form_type,
-                 filing.company, filing.accession)
+        log.info("[%d/%d] %s %s (%s)", i, len(filings), filing.form_type, filing.company, filing.accession)
+        
         doc_url = resolve_primary_document(client, filing)
         if doc_url is None:
             records.append(build_record(filing, None, _empty_extraction()))
             continue
+            
         try:
             html = client.get(doc_url).text
+            
+            # 1. Run Deterministic Layer
             extraction = extract_key_terms(html, SETTINGS.target_fields)
-        except Exception as exc:  # noqa: BLE001 - one bad filing must not kill the run
+            
+            # 2. Check for missing critical fields (ignoring optional ones)
+            optional_fields = {"isin", "guarantor"}
+            critical_missing = [f for f in extraction.missing if f not in optional_fields]
+            
+            # 3. Hybrid AI Fallback Layer
+            if critical_missing:
+                # Strip HTML to save tokens before sending to LLM
+                clean_text = BeautifulSoup(html, "lxml").get_text(separator=' ', strip=True)
+                
+                # Fetch missing data from NIM
+                llm_results = extract_missing_fields_with_llm(clean_text, extraction.missing)
+                
+                # Merge the LLM answers into our extraction result
+                for field, val in llm_results.items():
+                    if val:
+                        extraction.fields[field] = val
+                        extraction.method_used[field] = "llm_nim_fallback"
+                
+                # Re-evaluate missing fields after the merge
+                extraction.missing = [f for f, v in extraction.fields.items() if v is None]
+
+        except Exception as exc: 
             log.error("Extraction failed for %s: %s", filing.accession, exc)
             extraction = _empty_extraction()
+            
         records.append(build_record(filing, doc_url, extraction))
 
-    stamp = target_date.strftime("%Y%m%d")
-    write_json(records, out_dir / f"key_terms_{stamp}.json")
-    write_xml(records, out_dir / f"key_terms_{stamp}.xml")
-
-    complete = sum(1 for r in records if r["extraction_status"] == "complete")
-    partial = sum(1 for r in records if r["extraction_status"] == "partial")
-    log.info("Done: %d filings | %d complete | %d partial | outputs in %s",
-             len(records), complete, partial, out_dir)
-    return 0
+    # ... (keep the rest of your file writing logic exactly the same) ...
 
 
 def _empty_extraction():

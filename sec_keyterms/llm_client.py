@@ -45,13 +45,17 @@ def extract_missing_fields_with_llm(text_chunk: str, missing_fields: list[str]) 
     try:
         # We use a fast, highly capable model like Llama 3 70B hosted on NIM
         # Update the model string to point to the correct 3.1 version
+        # Using the free DeepSeek endpoint on NVIDIA NIM
         response = client.chat.completions.create(
-            model="deepseek-ai/deepseek-v4-pro", 
+            model="deepseek-ai/deepseek-v4-pro",
             messages=[
                 {"role": "system", "content": system_prompt},
+                # We limit to 15,000 characters to stay well within token limits
                 {"role": "user", "content": text_chunk[:15000]} 
             ],
             temperature=0,
+            max_tokens=512,       # Prevent runaway text generation
+            timeout=30.0,         # CRITICAL: Drop the connection if it takes longer than 30 seconds
             response_format={
                 "type": "json_object",
                 "schema": DynamicSchema.model_json_schema()

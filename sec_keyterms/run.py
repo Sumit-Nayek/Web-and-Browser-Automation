@@ -13,13 +13,14 @@ import logging
 import pathlib
 import sys
 
+from bs4 import BeautifulSoup
+
 from .business_day import previous_business_day
 from .config import SETTINGS
 from .daily_index import fetch_filings_for_day, resolve_primary_document
 from .extractor import extract_key_terms
 from .http_client import EdgarClient
 from .writers import write_json, write_xml
-from bs4 import BeautifulSoup
 from .llm_client import extract_missing_fields_with_llm
 from .validators import is_valid_cusip, is_valid_isin, normalize_date, validate_date_sequence, calculate_confidence
 
@@ -27,8 +28,6 @@ log = logging.getLogger("sec_keyterms")
 
 
 def build_record(filing, doc_url, extraction) -> dict:
-
-    # (Keep your existing optional_fields and status logic here...)
     optional_fields = {"isin", "guarantor"}
     truly_missing = [f for f in extraction.missing if f not in optional_fields]
     status = "complete" if not truly_missing else (
@@ -44,8 +43,8 @@ def build_record(filing, doc_url, extraction) -> dict:
         "document_url": doc_url,
         "extraction_status": status,
         "key_terms": extraction.fields,
-        "confidence_scores": extraction.confidence_scores,       # NEW
-        "validation_warnings": extraction.validation_warnings,   # NEW
+        "confidence_scores": getattr(extraction, "confidence_scores", {}),       
+        "validation_warnings": getattr(extraction, "validation_warnings", []),   
         "missing_fields": extraction.missing,
         "extraction_methods": extraction.method_used,
     }
@@ -58,6 +57,7 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, lim
         filings = filings[:limit]
 
     records: list[dict] = []
+    
     for i, filing in enumerate(filings, 1):
         log.info("[%d/%d] %s %s (%s)", i, len(filings), filing.form_type, filing.company, filing.accession)
         
@@ -78,12 +78,17 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, lim
             
             # 3. Hybrid AI Fallback Layer
             if critical_missing:
-                # Strip HTML to save tokens before sending to LLM
                 clean_text = BeautifulSoup(html, "lxml").get_text(separator=' ', strip=True)
-                
-                # Fetch missing data from NIM
+                # llm_results = extract_missing_fields_with_llm(clean_text, extraction.missing)
+                # # Fetch missing data from NIM
                 llm_results = extract_missing_fields_with_llm(clean_text, extraction.missing)
                 
+                # Merge the LLM answers into our extraction result
+                for field, val in llm_results.items():
+                    # CRITICAL FIX: Only accept fields we explicitly asked for
+                    if val and field in extraction.missing:
+                        extraction.fields[field] = val
+                        extraction.method_used[field] = "llm_nim_fallback"
                 # Merge the LLM answers into our extraction result
                 for field, val in llm_results.items():
                     if val:
@@ -92,9 +97,8 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, lim
                 
                 # Re-evaluate missing fields after the merge
                 extraction.missing = [f for f, v in extraction.fields.items() if v is None]
-            # ... [Your existing LLM NIM Fallback logic] ...
-
-            # 4. Phase 4 Validation & Confidence Layer
+                
+            # 4. Phase 4 Validation & Confidence Layer (Runs for ALL filings)
             extraction.validation_warnings = validate_date_sequence(
                 extraction.fields.get("trade_date"),
                 extraction.fields.get("original_issue_date"),
@@ -105,10 +109,23 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, lim
         except Exception as exc: 
             log.error("Extraction failed for %s: %s", filing.accession, exc)
             extraction = _empty_extraction()
-
+            
+        # Add the finalized record to the list (Fixed: uncommented and indented correctly)
         records.append(build_record(filing, doc_url, extraction))
         
-    # ... (keep the rest of your file writing logic exactly the same) ...
+    # --- END OF FOR LOOP ---
+
+    # 5. Tally the results (Fixed: completely outside the loop and try/except)
+    complete = sum(1 for r in records if r["extraction_status"] == "complete")
+    partial = sum(1 for r in records if r["extraction_status"] == "partial")
+    
+    # 6. Save the file to the output directory
+    out_file = pathlib.Path(out_dir) / f"key_terms_{target_date.strftime('%Y%m%d')}.json"
+    write_json(records, out_file)
+    
+    log.info("Done: %d filings | %d complete | %d partial | outputs in %s",
+             len(records), complete, partial, out_dir)
+    return 0 
 
 
 def _empty_extraction():

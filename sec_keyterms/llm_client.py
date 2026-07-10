@@ -36,10 +36,12 @@ def extract_missing_fields_with_llm(text_chunk: str, missing_fields: list[str]) 
     DynamicSchema = create_model('MissingFieldsSchema', **schema_fields)
 
     # 2. Build the system prompt
+    # 2. Build the system prompt
     system_prompt = (
         "You are an expert financial data extraction AI. "
         "Extract the requested financial terms from the SEC filing text provided. "
-        "If a field is truly not present in the text (e.g., an FWP missing a trade date), return null. "
+        "If a field is truly not present in the text, return null. "
+        "Keep extracted values concise. If a date is buried in a paragraph, extract ONLY the date string. "
         "Return the data strictly conforming to the requested JSON schema."
     )
 
@@ -55,7 +57,7 @@ def extract_missing_fields_with_llm(text_chunk: str, missing_fields: list[str]) 
                 {"role": "user", "content": text_chunk[:15000]} 
             ],
             temperature=0,
-            max_tokens=512,
+            max_tokens=1024,
             timeout=15.0, # We can reduce this to 15 seconds since Llama 8B is so fast
             response_format={
                 "type": "json_object",

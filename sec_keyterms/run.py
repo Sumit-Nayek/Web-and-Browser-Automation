@@ -21,17 +21,20 @@ from .http_client import EdgarClient
 from .writers import write_json, write_xml
 from bs4 import BeautifulSoup
 from .llm_client import extract_missing_fields_with_llm
+from .validators import is_valid_cusip, is_valid_isin, normalize_date, validate_date_sequence, calculate_confidence
 
 log = logging.getLogger("sec_keyterms")
 
 
 def build_record(filing, doc_url, extraction) -> dict:
-    # ISIN and Guarantor are optional. If only they are missing, it's still 'complete'.
+
+    # (Keep your existing optional_fields and status logic here...)
     optional_fields = {"isin", "guarantor"}
-    truly_missing = [f for f in extraction.missing if f not in optional_fields]    
+    truly_missing = [f for f in extraction.missing if f not in optional_fields]
     status = "complete" if not truly_missing else (
         "partial" if any(v for k, v in extraction.fields.items() if v and k not in optional_fields) else "failed"
     )
+
     return {
         "accession_number": filing.accession,
         "form_type": filing.form_type,
@@ -41,6 +44,8 @@ def build_record(filing, doc_url, extraction) -> dict:
         "document_url": doc_url,
         "extraction_status": status,
         "key_terms": extraction.fields,
+        "confidence_scores": extraction.confidence_scores,       # NEW
+        "validation_warnings": extraction.validation_warnings,   # NEW
         "missing_fields": extraction.missing,
         "extraction_methods": extraction.method_used,
     }

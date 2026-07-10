@@ -62,7 +62,9 @@ class ExtractionResult:
     fields: dict[str, str | None] = field(default_factory=dict)
     missing: list[str] = field(default_factory=list)
     method_used: dict[str, str] = field(default_factory=dict)
-
+    # NEW FIELDS FOR PHASE 4:
+    confidence_scores: dict[str, float] = field(default_factory=dict) 
+    validation_warnings: list[str] = field(default_factory=list)
 
 def _clean(text: str) -> str:
     return re.sub(r"\s+", " ", text).replace("\xa0", " ").strip()

@@ -84,8 +84,9 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, lim
                 llm_results = extract_missing_fields_with_llm(clean_text, extraction.missing)
                 
                 # Merge the LLM answers into our extraction result
+                # Merge the LLM answers into our extraction result
                 for field, val in llm_results.items():
-                    # CRITICAL FIX: Only accept fields we explicitly asked for
+                    # CRITICAL FIX: Block hallucinated fields from entering the schema
                     if val and field in extraction.missing:
                         extraction.fields[field] = val
                         extraction.method_used[field] = "llm_nim_fallback"

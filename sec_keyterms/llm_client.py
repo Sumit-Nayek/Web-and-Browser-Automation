@@ -18,7 +18,8 @@ if not api_key:
 
 client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
-    api_key=api_key
+    api_key=api_key,
+    max_retries=0  # CRITICAL: Prevent the SDK from waiting for multiple timeouts
 )
 def extract_missing_fields_with_llm(text_chunk: str, missing_fields: list[str]) -> dict:
     """

@@ -92,13 +92,22 @@ def run(target_date: dt.date, forms: tuple[str, ...], out_dir: pathlib.Path, lim
                 
                 # Re-evaluate missing fields after the merge
                 extraction.missing = [f for f, v in extraction.fields.items() if v is None]
+            # ... [Your existing LLM NIM Fallback logic] ...
+
+            # 4. Phase 4 Validation & Confidence Layer
+            extraction.validation_warnings = validate_date_sequence(
+                extraction.fields.get("trade_date"),
+                extraction.fields.get("original_issue_date"),
+                extraction.fields.get("stated_maturity_date")
+            )
+            extraction.confidence_scores = calculate_confidence(extraction.method_used)
 
         except Exception as exc: 
             log.error("Extraction failed for %s: %s", filing.accession, exc)
             extraction = _empty_extraction()
-            
-        records.append(build_record(filing, doc_url, extraction))
 
+        records.append(build_record(filing, doc_url, extraction))
+        
     # ... (keep the rest of your file writing logic exactly the same) ...
 
 

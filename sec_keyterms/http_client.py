@@ -52,7 +52,7 @@ class EdgarClient:
         # 2. CRITICAL FIX: Apply the SEC-compliant headers directly to the session
         # This completely replaces the old SETTINGS.user_agent
         self._session.headers.update({
-            "User-Agent": "Sumit Nayek Portfolio Project (ghostnayek@gmail.com)",
+            "User-Agent": "Sumit Nayek Portfolio Project ghostnayek@gmail.com",
             "Accept-Encoding": "gzip, deflate",
             "Host": "www.sec.gov"
         })

@@ -38,16 +38,26 @@ class _RateLimiter:
             time.sleep(sleep_for)
 
 
+import requests
+import time
+import logging
+
+log = logging.getLogger(__name__)
+
 class EdgarClient:
-    def __init__(self) -> None:
+    def __init__(self):
+        # 1. Initialize the session wrapper
         self._session = requests.Session()
-        self._session.headers.update(
-            {
-                "User-Agent": SETTINGS.user_agent,
-                "Accept-Encoding": "gzip, deflate",
-                "Host": "www.sec.gov",
-            }
-        )
+        
+        # 2. CRITICAL FIX: Apply the SEC-compliant headers directly to the session
+        # This completely replaces the old SETTINGS.user_agent
+        self._session.headers.update({
+            "User-Agent": "Sumit Nayek Portfolio Project (ghostnayek@gmail.com)",
+            "Accept-Encoding": "gzip, deflate",
+            "Host": "www.sec.gov"
+        })
+        
+        # 3. Setup the rate limiter
         self._limiter = _RateLimiter(SETTINGS.max_requests_per_second)
 
     def get(self, url: str) -> requests.Response:

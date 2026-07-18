@@ -11,6 +11,7 @@ Financial institutions, investment firms, compliance teams, and capital market o
 This project presents an automated data extraction framework that continuously identifies newly published SEC filings, retrieves the corresponding HTML documents, extracts key security attributes, and transforms unstructured regulatory disclosures into structured machine-readable datasets.
 
 By replacing manual document review with intelligent browser automation and HTML parsing, the solution significantly improves operational efficiency, reduces processing time, minimizes human error, and provides a scalable foundation for downstream financial analytics and regulatory reporting.
+<img width="1392" height="673" alt="image" src="https://github.com/user-attachments/assets/22c68153-ea7a-4905-978b-a8fd09b6f75f" />
 
 ---
 

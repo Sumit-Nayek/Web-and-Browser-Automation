@@ -166,7 +166,7 @@ The automation delivers measurable improvements across multiple operational dime
 6. Validate extracted values.
 7. Generate structured JSON (or XML) output.
 8. Store results for downstream processing.
-
+This create a complete end to end pipeline for data collection
 ---
 
 # Example Output

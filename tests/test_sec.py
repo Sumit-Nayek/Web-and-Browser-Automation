@@ -1,7 +1,7 @@
 import requests
 
 headers = {
-    "User-Agent": "Sumit Nayek Portfolio Project ghostnayek@gmail.com",
+    "User-Agent": "ghostnayek@gmail.com",
     "Accept-Encoding": "gzip, deflate",
     "Host": "www.sec.gov"
 }

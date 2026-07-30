@@ -216,5 +216,4 @@ The generated structured data can be integrated with:
 # Conclusion
 
 This project demonstrates how intelligent automation can modernize regulatory data acquisition by transforming unstructured SEC disclosures into standardized, high-quality datasets.
-
 The solution not only reduces manual effort and operational cost but also establishes a scalable framework for integrating regulatory intelligence into enterprise financial systems. As organizations continue to process growing volumes of public disclosures, automation of this nature becomes a strategic capability that enhances efficiency, supports data-driven decision-making, and strengthens compliance operations.

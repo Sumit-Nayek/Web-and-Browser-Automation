@@ -4,8 +4,6 @@
 
 ---
 
-## Executive Summary
-
 Financial institutions, investment firms, compliance teams, and capital market organizations rely heavily on timely and accurate information from SEC EDGAR filings. However, extracting critical security information from newly published filings remains a manual, repetitive, and time intensive process.
 
 This project presents an automated data extraction framework that continuously identifies newly published SEC filings, retrieves the corresponding HTML documents, extracts key security attributes, and transforms unstructured regulatory disclosures into structured machine readable datasets.
